@@ -24,13 +24,17 @@
   (and (= sum (apply + values))
        (every? identity (map (partial in? coll) values))))
 
-(defn t1-1
-  []
+(defn apply-task-1
+  [subtask]
   (let [sum 2020
         data (map read-string (line-split (slurp "inputs/input1")))
-        results (find-sum data sum)]
+        results (subtask data sum)]
     (when (verify-find-sum results data sum)
       (apply * results))))
+
+(defn t1-1
+  []
+  (apply-task-1 find-sum))
 
 (defn find-three-sum
   ([coll sum]
@@ -46,8 +50,4 @@
 
 (defn t1-2
   []
-  (let [sum 2020
-        data (map read-string (line-split (slurp "inputs/input1")))
-        results (find-three-sum data sum)]
-    (when (verify-find-sum results data sum)
-      (apply * results))))
+  (apply-task-1 find-three-sum))
