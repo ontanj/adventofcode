@@ -82,3 +82,23 @@
 
 (def t2-2
   (partial apply-password-checker password-checker-exact))
+
+; task 3
+(defn tree-encounter?
+  [line pos]
+  (= \# (nth line pos)))
+
+(defn tree-counter
+  [acc [line pos]]
+  (if (tree-encounter? line pos) (inc acc) acc))
+
+(defn run-hill
+  [slope]
+  (let [data (line-split (slurp "inputs/input3"))
+        size (count (first data))
+        positions (map #(mod %1 size) (iterate (partial + slope) 0))]
+    (reduce tree-counter 0 (map vector data positions))))
+
+(def t3-1
+  (let [slope 3]
+    (run-hill slope)))
