@@ -53,15 +53,32 @@
   (apply-task-1 find-three-sum))
 
 ; task 2
-(defn password-checker
-  [acc inp]
-  (let [[count letter-col passw] (str/split inp #" ")
-        [low up] (map read-string (str/split count #"-"))
-        letter (first letter-col)
+(defn password-checker-occurances
+  [indices letter passw acc]
+  (let [[low up] indices
         occurances (reduce #(if (= letter %2) (inc %1) %1) 0 passw)]
     (if (and (<= occurances up) (>= occurances low)) (inc acc) acc)))
 
-(defn t2-1
-  []
+(defn password-checker
+  [checker acc inp]
+  (let [[count letter-col passw] (str/split inp #" ")
+        indices (map read-string (str/split count #"-"))
+        letter (first letter-col)]
+    (checker indices letter passw acc)))
+
+(defn apply-password-checker
+  [checker]
   (let [data (line-split (slurp "inputs/input2"))]
-    (reduce password-checker 0 data)))
+    (reduce (partial password-checker checker) 0 data)))
+
+(def t2-1
+  (partial apply-password-checker password-checker-occurances))
+
+(defn password-checker-exact
+  [indices letter passw acc]
+  (if (= 1 (reduce #(if (= letter (nth passw (dec %2))) (inc %1) %1) 0 indices))
+    (inc acc)
+    acc))
+
+(def t2-2
+  (partial apply-password-checker password-checker-exact))
