@@ -4,6 +4,9 @@
 (def line-split
   #(str/split %1 #"\n"))
 
+(def d-line-split
+  #(str/split %1 #"\n\n"))
+
 (defn in? 
   "true if coll contains elm"
   [coll elm]
@@ -195,3 +198,20 @@
 (defn t5-2
   []
   (detect-missing (sort (map seat-to-id (seats)))))
+
+; task 6
+(defn declaration-forms
+  []
+  (d-line-split (slurp "inputs/input6")))
+
+(defn count-letters-except-newline
+  [string]
+  (->>
+   string
+   set
+   (remove #(= \newline %1))
+   count))
+
+(defn t6-1
+  []
+  (reduce #(+ %1 (count-letters-except-newline %2)) 0 (declaration-forms)))
