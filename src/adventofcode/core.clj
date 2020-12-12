@@ -185,3 +185,13 @@
 (defn t5-1
   []
   (reduce max 0 (map seat-to-id (seats))))
+
+(defn detect-missing
+  [vals]
+  (if (= (inc (first vals)) (second vals))
+    (recur (rest vals))
+    (inc (first vals))))
+
+(defn t5-2
+  []
+  (detect-missing (sort (map seat-to-id (seats)))))
