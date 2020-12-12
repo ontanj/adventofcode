@@ -202,9 +202,9 @@
 ; task 6
 (defn declaration-forms
   []
-  (d-line-split (slurp "inputs/input6")))
+  (d-line-split (str/trim (slurp "inputs/input6"))))
 
-(defn count-letters-except-newline
+(defn count-unique-letters-except-newline
   [string]
   (->>
    string
@@ -214,4 +214,32 @@
 
 (defn t6-1
   []
-  (reduce #(+ %1 (count-letters-except-newline %2)) 0 (declaration-forms)))
+  (reduce #(+ %1 (count-unique-letters-except-newline %2)) 0 (declaration-forms)))
+
+; count occurances of value (char or string) in string
+(defn count-occurances
+  [string value]
+  (-> value
+      str
+      re-pattern
+      (re-seq string)
+      count))
+
+(defn count-lines
+  [string]
+  (inc (count-occurances string \newline)))
+
+(defn count-by-all
+  ([string] (count-by-all 0 (count-lines string) (str/replace string "\n" "")))
+  ([counter group-size string]
+   (if (not (empty? string))
+     (let [letter (first string)
+           rest-string (str/replace string (str letter) "")]
+       (if (= group-size (count-occurances string letter))
+         (recur (inc counter) group-size rest-string)
+         (recur counter group-size rest-string)))
+     counter)))
+
+(defn t6-2
+  []
+  (reduce + 0 (map count-by-all (declaration-forms))))
