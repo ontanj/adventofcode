@@ -243,3 +243,35 @@
 (defn t6-2
   []
   (reduce + 0 (map count-by-all (declaration-forms))))
+
+; task 7
+(defn bag-rule-to-map
+  [rule]
+  (let [container (second (re-find #"(.*?) bags contain" rule))
+        content (map second (re-seq #"\d (.*?) bag" rule))]
+    [container content]))
+
+(defn bag-map
+  []
+  (into {} (map bag-rule-to-map (line-split (slurp "inputs/input7")))))
+
+(defn find-bag-containers
+  [bag-map bag]
+  (map first (filter #(in? (second %) bag) bag-map)))
+
+(defn remove-bag
+  [bag-map bag]
+  (into {} (remove #(= bag (first %)) bag-map)))
+
+(defn bag-containers
+  [counter bag-map bags]
+  (if (empty? bags)
+    counter
+    (let [containers (find-bag-containers bag-map (first bags))]
+      (recur (+ counter (count containers))
+             (reduce remove-bag bag-map containers)
+             (concat (rest bags) containers)))))
+
+(defn t7-1
+  []
+  (bag-containers 0 (bag-map) ["shiny gold"]))
