@@ -137,7 +137,6 @@
   [field passport]
   (second (re-find (re-pattern (str field ":(.*?)(?:$|[\n ])")) passport)))
 
-
 (defn validate-height
   [height-val]
   (when-let [[_ height-string unit] (re-find #"^(\d+)(cm|in)$" height-val)]
@@ -169,3 +168,20 @@
 (defn t4-2
   []
   (validate-passports (passports) validate-strict))
+
+; task 5
+(defn seats
+  []
+  (line-split (slurp "inputs/input5")))
+
+(defn seat-to-id
+  [seat]
+  (->
+   seat
+   (str/replace #"[RB]" "1")
+   (str/replace #"[LF]" "0")
+   (Integer/parseInt 2)))
+
+(defn t5-1
+  []
+  (reduce max 0 (map seat-to-id (seats))))
