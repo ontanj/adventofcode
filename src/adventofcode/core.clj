@@ -9,6 +9,10 @@
   [coll elm]
   (some #(= elm %) coll))
 
+(defn incl-between
+  [v1 v2 v3]
+  (and (<= v1 v2) (<= v2 v3)))
+
 ; task 1
 (defn find-sum
   [coll sum]
@@ -106,3 +110,62 @@
 (def t3-2
   (let [try [[1 1] [3 1] [5 1] [7 1] [1 2]]]
     (apply * (map #(apply run-hill %1) try))))
+
+; task 4
+(defn passports
+  []
+  (str/split (slurp "inputs/input4") #"\n\n"))
+
+(def mandatory-fields
+  ["byr" "iyr" "eyr" "hgt" "hcl" "ecl" "pid"])
+
+(defn validate-passport
+  [passport-string]
+  (let [size (count mandatory-fields)]
+    (= size (reduce #(if (.contains passport-string %2) (inc %1) %1)
+                  0 mandatory-fields))))
+
+(defn validate-passports
+  [passports validator]
+  (reduce #(if %2 (inc %1) %1) 0 (map validator passports)))
+
+(defn t4-1
+  []
+  (validate-passports (passports) validate-passport))
+
+(defn fetch-field
+  [field passport]
+  (second (re-find (re-pattern (str field ":(.*?)(?:$|[\n ])")) passport)))
+
+
+(defn validate-height
+  [height-val]
+  (when-let [[_ height-string unit] (re-find #"^(\d+)(cm|in)$" height-val)]
+    (let [height (Integer. height-string)]
+      (if (= "cm" unit)
+        (incl-between 150 height 193)
+        (incl-between 59 height 76)))))
+
+(def validators
+  {"byr" #(incl-between 1920 (read-string %) 2020)
+   "iyr" #(incl-between 2010 (read-string %) 2020)
+   "eyr" #(incl-between 2020 (read-string %) 2030)
+   "hgt" validate-height
+   "hcl" #(re-find #"^#[0-9a-f]{6}$" %)
+   "ecl" #(in? ["amb" "blu" "brn" "gry" "grn" "hzl" "oth"] %)
+   "pid" #(re-find #"^\d{9}$" %)})
+
+(defn validate-strict
+  [passport-string]
+  (let [size (count validators)]
+    (= size (reduce (fn [acc [key validator]]
+                      (if-let [_ (some->> passport-string
+                                          (fetch-field key)
+                                          validator)]
+                        (inc acc)
+                        acc))
+                    0 validators))))
+
+(defn t4-2
+  []
+  (validate-passports (passports) validate-strict))
