@@ -93,12 +93,16 @@
   (if (tree-encounter? line pos) (inc acc) acc))
 
 (defn run-hill
-  [slope]
+  [right down]
   (let [data (line-split (slurp "inputs/input3"))
         size (count (first data))
-        positions (map #(mod %1 size) (iterate (partial + slope) 0))]
-    (reduce tree-counter 0 (map vector data positions))))
+        positions (map #(mod %1 size) (iterate (partial + (/ right down)) 0))
+        rows (keep-indexed #(when (= 0 (mod %1 down)) %2) (map vector data positions))]
+    (reduce tree-counter 0 rows)))
 
 (def t3-1
-  (let [slope 3]
-    (run-hill slope)))
+  (partial run-hill 3 1))
+
+(def t3-2
+  (let [try [[1 1] [3 1] [5 1] [7 1] [1 2]]]
+    (apply * (map #(apply run-hill %1) try))))
