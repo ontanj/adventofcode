@@ -339,12 +339,40 @@
       (condp = inst
         "acc" (recur instructions (inc line))
         "jmp" (let [[pred res] (init-program
-                                (assoc (into [] instructions) line ["nop" val]))]
+                                (assoc (into [] instructions)
+                                       line ["nop" val]))]
                 (if pred res (recur instructions (inc line))))
         "nop" (let [[pred res] (init-program
-                                (assoc (into [] instructions) line ["jmp" val]))]
+                                (assoc (into [] instructions)
+                                       line ["jmp" val]))]
                 (if pred res (recur instructions (inc line))))))))
 
 (defn t8-2
   []
   (try-change-instructions (instructions) 0))
+
+; task 9
+(defn value-stream
+  []
+  (map #(Integer. %) (line-split (slurp "inputs/input9"))))
+
+(defn validate-sum
+  [preamble val]
+  (if (empty? preamble)
+    false
+    (let [wanted (- val (first preamble))]
+      (if (in? (rest preamble) wanted)
+        true
+        (recur (rest preamble) val)))))
+
+(defn validate-all
+  [preamble input]
+  (if (validate-sum preamble (first input))
+    (recur (conj (into [] (rest preamble)) (first input)) (rest input))
+    (first input)))
+
+(defn t9-1
+  [pre-size]
+  (let [stream (value-stream)]
+    (validate-all (take pre-size stream) (drop pre-size stream))))
+
