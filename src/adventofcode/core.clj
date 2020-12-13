@@ -397,3 +397,24 @@
 (defn t9-2
   [pre-size]
   (apply + (find-sum (value-stream) (t9-1 pre-size))))
+
+; task 10
+(defn adapters
+  []
+  (sort (map #(Integer/parseInt %) (line-split (slurp "inputs/input10")))))
+
+(defn count-differences
+  [[one-count three-count last-val] new-val]
+  (condp = (- new-val last-val)
+      1 [(inc one-count) three-count new-val]
+      3 [one-count (inc three-count) new-val]
+      :else [one-count three-count new-val]))
+
+(defn adapter-differences
+  []
+  (let [[one-count three-count _] (reduce count-differences [0 0 0] (adapters))]
+    [one-count (inc three-count)]))
+
+(defn t10-1
+  []
+  (apply * (adapter-differences)))
