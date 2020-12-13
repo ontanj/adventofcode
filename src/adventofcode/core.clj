@@ -16,6 +16,21 @@
   [v1 v2 v3]
   (and (<= v1 v2) (<= v2 v3)))
 
+; count occurances of value (char or string) in string
+(defn count-occurances
+  [string value]
+  (-> value
+      str
+      re-pattern
+      (re-seq string)
+      count))
+
+(defn count-lines
+  [string]
+  (-> string
+      (count-occurances \newline)
+      inc))
+
 ; task 1
 (defn find-sum
   [coll sum]
@@ -215,19 +230,6 @@
 (defn t6-1
   []
   (reduce #(+ %1 (count-unique-letters-except-newline %2)) 0 (declaration-forms)))
-
-; count occurances of value (char or string) in string
-(defn count-occurances
-  [string value]
-  (-> value
-      str
-      re-pattern
-      (re-seq string)
-      count))
-
-(defn count-lines
-  [string]
-  (inc (count-occurances string \newline)))
 
 (defn count-by-all
   ([string] (count-by-all 0 (count-lines string) (str/replace string "\n" "")))
