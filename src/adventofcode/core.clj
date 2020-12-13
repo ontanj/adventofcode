@@ -433,3 +433,69 @@
         built-in (+ 3 (last adapters))
         adapters-built (conj (into [] adapters) built-in)]
     (get (count-adapter-possibilities adapters-built) built-in)))
+
+; task 11
+(defn seats
+  []
+  (slurp "inputs/input11"))
+
+(defn seat-at
+  [seats pos]
+  (nth seats pos))
+
+(def remove-non-exist
+  [(fn [poss pos width height]
+     (if (= (mod (+ 2 pos) width) 0)
+       (reduce dissoc poss [2 4 7]) poss)) ; remove right
+   (fn [poss pos width height]
+     (if (= (mod pos width) 0)
+       (reduce dissoc poss [0 3 5]) poss)) ; remove left
+   (fn [poss pos width height]
+     (if (< pos width)
+       (reduce dissoc poss [0 1 2]) poss)) ; remove above
+   (fn [poss pos width height]
+     (if (>= pos (* width (dec height)))
+       (reduce dissoc poss [5 6 7]) poss))]) ; remove below
+
+(defn neighboring-positions
+  [pos width height]
+  (reduce #(%2 %1 pos width height)
+          (into {}
+                (map vector
+                     (range 8)
+                     (concat (range (- pos width 1) (- pos width -2))
+                             (list (dec pos) (inc pos))
+                             (range (+ pos width -1) (+ pos width 2)))))
+          remove-non-exist))
+
+(defn count-adjacent-people
+  [seats pos width height]
+  (reduce + (map #(if (= \# (seat-at seats (second %))) 1 0)
+                 (neighboring-positions pos width height))))
+
+(defn update-seat
+  [seats pos width height]
+  (condp = (seat-at seats pos)
+    \# (if (<= 4 (count-adjacent-people seats pos width height)) \L \#)
+    \L (if (= 0 (count-adjacent-people seats pos width height)) \# \L)
+    \. \.
+    \newline \newline))
+
+(defn update-all-seats
+  [seats width height]
+  (reduce #(str %1 (update-seat seats %2 width height)) "" (range (count seats))))
+
+(defn update-til-stable
+  [seats width height]
+  (let [new-seats (update-all-seats seats width height)]
+    (if (= new-seats seats)
+      seats
+      (recur new-seats width height))))
+
+(defn t11-1
+  []
+  (let [seats (seats)
+        width (count (re-find #".*?\n" seats))
+        height (/ (count seats) width)]
+    (count (re-seq #"#" (update-til-stable seats width height)))))
+
