@@ -298,3 +298,29 @@
 (defn t7-2
   []
   (dec (bag-contents 0 (bag-map) {"shiny gold" 1})))
+
+; task 8
+(defn interpret-instruction
+  [instruction]
+  (let [[_ inst val] (re-find #"^(\w{3}) \+?(.*)$" instruction)]
+          [inst (Integer. val)]))
+
+(defn instructions
+  []
+  (map interpret-instruction
+       (line-split (slurp "inputs/input8"))))
+
+(defn evaluate-instructions
+  [instructions line acc visited]
+  (if (contains? visited line)
+    acc
+    (let [[inst val] (nth instructions line)
+          visited (conj visited line)]
+      (condp = inst
+        "acc" (recur instructions (inc line) (+ val acc) visited)
+        "jmp" (recur instructions (+ val line) acc visited)
+        "nop" (recur instructions (inc line) acc visited)))))
+
+(defn t8-1
+  []
+  (evaluate-instructions (instructions) 0 0 #{}))
