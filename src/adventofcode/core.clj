@@ -248,7 +248,7 @@
 (defn bag-rule-to-map
   [rule]
   (let [container (second (re-find #"(.*?) bags contain" rule))
-        content (map second (re-seq #"\d (.*?) bag" rule))]
+        content (map (fn [[_ nbr type]] [(Integer.  nbr) type]) (re-seq #"(\d+?) (.*?) bag" rule))]
     [container content]))
 
 (defn bag-map
@@ -257,7 +257,7 @@
 
 (defn find-bag-containers
   [bag-map bag]
-  (map first (filter #(in? (second %) bag) bag-map)))
+  (map first (filter #(in? (map second (second %)) bag) bag-map)))
 
 (defn remove-bag
   [bag-map bag]
@@ -275,3 +275,26 @@
 (defn t7-1
   []
   (bag-containers 0 (bag-map) ["shiny gold"]))
+
+(defn update-bag-count
+  [multiplier bags [counter type]]
+  (let [contrib (* multiplier counter)]
+    (update bags type
+            #(if % (+ % contrib) contrib))))
+
+(defn bag-contents
+  [counter bag-map old-bags]
+  (let [[bag q] (first old-bags)
+        new-count (+ q counter)
+        new-bags (reduce (partial update-bag-count q)
+                         (remove-bag old-bags bag)
+                         (get bag-map bag))]
+    (if (empty? new-bags)
+      new-count
+      (recur new-count
+             bag-map
+             new-bags))))
+
+(defn t7-2
+  []
+  (dec (bag-contents 0 (bag-map) {"shiny gold" 1})))
