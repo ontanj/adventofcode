@@ -313,14 +313,38 @@
 (defn evaluate-instructions
   [instructions line acc visited]
   (if (contains? visited line)
-    acc
-    (let [[inst val] (nth instructions line)
-          visited (conj visited line)]
-      (condp = inst
-        "acc" (recur instructions (inc line) (+ val acc) visited)
-        "jmp" (recur instructions (+ val line) acc visited)
-        "nop" (recur instructions (inc line) acc visited)))))
+    [false acc]
+    (if (= line (count instructions))
+      [true acc]
+      (let [[inst val] (nth instructions line)
+            visited (conj visited line)]
+        (condp = inst
+          "acc" (recur instructions (inc line) (+ val acc) visited)
+          "jmp" (recur instructions (+ val line) acc visited)
+          "nop" (recur instructions (inc line) acc visited))))))
+
+(defn init-program
+  [instructions]
+  (evaluate-instructions instructions 0 0 #{}))
 
 (defn t8-1
   []
-  (evaluate-instructions (instructions) 0 0 #{}))
+  (second (init-program (instructions))))
+
+(defn try-change-instructions
+  [instructions line]
+  (if (= line (count instructions))
+    nil
+    (let [[inst val] (nth instructions line)]
+      (condp = inst
+        "acc" (recur instructions (inc line))
+        "jmp" (let [[pred res] (init-program
+                                (assoc (into [] instructions) line ["nop" val]))]
+                (if pred res (recur instructions (inc line))))
+        "nop" (let [[pred res] (init-program
+                                (assoc (into [] instructions) line ["jmp" val]))]
+                (if pred res (recur instructions (inc line))))))))
+
+(defn t8-2
+  []
+  (try-change-instructions (instructions) 0))
