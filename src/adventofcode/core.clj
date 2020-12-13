@@ -418,3 +418,18 @@
 (defn t10-1
   []
   (apply * (adapter-differences)))
+
+(defn update-adapter
+  [prev current]
+  (assoc prev current (reduce #((fnil + 0) (get prev %2) %1) 0 (range (- current 3) current))))
+
+(defn count-adapter-possibilities
+  [adapters]
+  (reduce update-adapter {0 1} adapters))
+
+(defn t10-2
+  []
+  (let [adapters (adapters)
+        built-in (+ 3 (last adapters))
+        adapters-built (conj (into [] adapters) built-in)]
+    (get (count-adapter-possibilities adapters-built) built-in)))
