@@ -376,3 +376,24 @@
   (let [stream (value-stream)]
     (validate-all (take pre-size stream) (drop pre-size stream))))
 
+(defn verify-sum
+  [input acc-sum desired low high]
+  (let [current (first input)
+        acc-sum (+ current acc-sum)
+        low (min current low)
+        high (max current high)]
+    (cond
+      (> acc-sum desired) nil
+      (= acc-sum desired) [low high]
+      :else (recur (rest input) acc-sum desired low high))))
+
+(defn find-sum
+  [input desired]
+  (let [val (first input)]
+    (if-let [interval (verify-sum (rest input) (first input) desired val val)]
+      interval
+      (recur (rest input) desired))))
+
+(defn t9-2
+  [pre-size]
+  (apply + (find-sum (value-stream) (t9-1 pre-size))))
