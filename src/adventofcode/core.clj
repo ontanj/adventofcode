@@ -445,19 +445,46 @@
   [seats pos]
   (nth seats pos))
 
+(defn right-most
+  [pos width height]
+  (= (mod (+ 2 pos) width) 0))
+
+(defn left-most
+  [pos width height]
+  (= (mod pos width) 0))
+
+(defn up-most
+  [pos width height]
+  (< pos width))
+
+(defn down-most
+  [pos width height]
+  (>= pos (* width (dec height))))
+
 (def remove-non-exist
   [(fn [poss pos width height]
-     (if (= (mod (+ 2 pos) width) 0)
+     (if (right-most pos width height)
        (reduce dissoc poss [2 4 7]) poss)) ; remove right
    (fn [poss pos width height]
-     (if (= (mod pos width) 0)
+     (if (left-most pos width height)
        (reduce dissoc poss [0 3 5]) poss)) ; remove left
    (fn [poss pos width height]
-     (if (< pos width)
+     (if (up-most pos width height)
        (reduce dissoc poss [0 1 2]) poss)) ; remove above
    (fn [poss pos width height]
-     (if (>= pos (* width (dec height)))
+     (if (down-most pos width height)
        (reduce dissoc poss [5 6 7]) poss))]) ; remove below
+
+(def directions
+  (list #(- %1 %2 1)
+        #(- %1 %2)
+        #(- %1 %2 -1)
+        (fn [pos _] (dec pos))
+        (fn [pos _] (inc pos))
+        #(+ %1 %2 -1)
+        #(+ %1 %2)
+        #(+ %1 %2 1)))
+
 
 (defn neighboring-positions
   [pos width height]
@@ -465,9 +492,7 @@
           (into {}
                 (map vector
                      (range 8)
-                     (concat (range (- pos width 1) (- pos width -2))
-                             (list (dec pos) (inc pos))
-                             (range (+ pos width -1) (+ pos width 2)))))
+                     (map #(%1 pos width) directions)))
           remove-non-exist))
 
 (defn count-adjacent-people
@@ -476,28 +501,68 @@
                  (neighboring-positions pos width height))))
 
 (defn update-seat
-  [seats pos width height]
+  [seats pos width height count-func nbr]
   (condp = (seat-at seats pos)
-    \# (if (<= 4 (count-adjacent-people seats pos width height)) \L \#)
-    \L (if (= 0 (count-adjacent-people seats pos width height)) \# \L)
+    \# (if (<= nbr (count-func seats pos width height)) \L \#)
+    \L (if (= 0 (count-func seats pos width height)) \# \L)
     \. \.
     \newline \newline))
 
 (defn update-all-seats
-  [seats width height]
-  (reduce #(str %1 (update-seat seats %2 width height)) "" (range (count seats))))
+  [seats width height count-func nbr]
+  (reduce #(str %1 (update-seat seats %2 width height count-func nbr)) "" (range (count seats))))
 
 (defn update-til-stable
-  [seats width height]
-  (let [new-seats (update-all-seats seats width height)]
+  [seats width height count-func nbr]
+  (let [new-seats (update-all-seats seats width height count-func nbr)]
     (if (= new-seats seats)
       seats
-      (recur new-seats width height))))
+      (recur new-seats width height count-func nbr))))
 
-(defn t11-1
-  []
+(defn count-stable-seats
+  [count-func nbr]
   (let [seats (seats)
         width (count (re-find #".*?\n" seats))
         height (/ (count seats) width)]
-    (count (re-seq #"#" (update-til-stable seats width height)))))
+    (count (re-seq #"#" (update-til-stable seats width height count-func nbr)))))
 
+(defn t11-1
+  []
+  (count-stable-seats count-adjacent-people 4))
+
+(defn neighboring-directions
+  [pos width height]
+  (reduce #(%2 %1 pos width height)
+          (into {}
+                (map vector
+                     (range 8)
+                     directions))
+          remove-non-exist))
+
+(def borders
+  (list right-most left-most up-most down-most))
+
+(defn border-seat
+  [pos width height]
+  (some #(% pos width height) borders))
+
+(defn is-outside
+  [pos width height]
+  (or (< pos 0) (>= pos (* width height)) (= 0 (mod (inc pos) width))))
+
+(defn search-occupied
+  [seats pos width height direction]
+  (let [next-pos (direction pos width)]
+    (cond
+      (is-outside next-pos width height) 0
+      (= (seat-at seats next-pos) \L) 0
+      (= (seat-at seats next-pos) \#) 1
+      :else (recur seats next-pos width height direction))))
+
+(defn count-adjacent-people-far
+  [seats pos width height]
+  (reduce + (map #(search-occupied seats pos width height (second %)) (neighboring-directions pos width height))))
+
+(defn t11-2
+  []
+  (count-stable-seats count-adjacent-people-far 5))
