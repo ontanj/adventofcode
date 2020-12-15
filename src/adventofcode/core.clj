@@ -566,3 +566,83 @@
 (defn t11-2
   []
   (count-stable-seats count-adjacent-people-far 5))
+
+; task 12
+(defn nav-instructions
+  []
+  (-> "inputs/input12" slurp line-split))
+
+(defn circulate-right
+  ([direction _] (circulate-right direction))
+  ([direction]
+   (case direction
+     "N" "E" "E" "S" "S" "W" "W" "N")))
+
+(def boat-movements
+  (list
+   #(update %1 :y + %2)
+   #(update %1 :y - %2)
+   #(update %1 :x + %2)
+   #(update %1 :x - %2)
+   (fn [status value] (update status :dir
+                              #(reduce circulate-right
+                                       % (range (* 3 (/ value 90))))))
+   (fn [status value] (update status :dir
+                              #(reduce circulate-right
+                                       % (range (/ value 90)))))
+   #(ride-instruction %1 (str (:dir %1) %2) %3)))
+
+(defn ride-instruction
+  [status instruction [n s e w l r f :as mov]]
+  (let [[_ action value-string] (re-find #"^(\w)(\d*)$" instruction)
+        value (Integer. value-string)]
+    (case action
+      "N" (n status value)
+      "S" (s status value)
+      "E" (e status value)
+      "W" (w status value)
+      "L" (l status value)
+      "R" (r status value)
+      "F" (f status value mov))))
+
+(defn ride-boat
+  [status instructions op-set]
+  (reduce #(ride-instruction %1 %2 op-set) status instructions))
+
+(defn t12-1
+  []
+  (let [status (ride-boat {:x 0 :y 0 :dir "E"} (nav-instructions) boat-movements)]
+    (+ (Math/abs (:x status)) (Math/abs (:y status)))))
+
+(defn rotate-wp
+  [{wp-x :wp-x wp-y :wp-y x :x y :y :as status} steps]
+  (let [new-status (-> status
+                       (assoc :wp-x (- wp-y))
+                       (assoc :wp-y (+ wp-x)))]
+    (if (= steps 1)
+      new-status
+      (recur new-status (dec steps)))))
+
+(defn forward-wp
+  [status value movements]
+  (let [x-move (* value (:wp-x status))
+        y-move (* value (:wp-y status))]
+    (-> status
+        (update :x + x-move)
+        (update :y + y-move))))
+
+(def wp-movements
+  (list
+   #(update %1 :wp-y + %2)
+   #(update %1 :wp-y - %2)
+   #(update %1 :wp-x + %2)
+   #(update %1 :wp-x - %2)
+   #(rotate-wp %1 (/ %2 90))
+   #(rotate-wp %1 (* 3 (/ %2 90)))
+   forward-wp))
+
+(defn t12-2
+  []
+  (let [status (ride-boat {:x 0 :y 0 :dir "E" :wp-x 10 :wp-y 1} (nav-instructions) wp-movements)]
+    (+ (Math/abs (:x status)) (Math/abs (:y status)))
+))
