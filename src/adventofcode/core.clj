@@ -578,6 +578,19 @@
    (case direction
      "N" "E" "E" "S" "S" "W" "W" "N")))
 
+(defn ride-instruction
+  [status instruction [n s e w l r f :as mov]]
+  (let [[_ action value-string] (re-find #"^(\w)(\d*)$" instruction)
+        value (Integer. value-string)]
+    (case action
+      "N" (n status value)
+      "S" (s status value)
+      "E" (e status value)
+      "W" (w status value)
+      "L" (l status value)
+      "R" (r status value)
+      "F" (f status value mov))))
+
 (def boat-movements
   (list
    #(update %1 :y + %2)
@@ -591,19 +604,6 @@
                               #(reduce circulate-right
                                        % (range (/ value 90)))))
    #(ride-instruction %1 (str (:dir %1) %2) %3)))
-
-(defn ride-instruction
-  [status instruction [n s e w l r f :as mov]]
-  (let [[_ action value-string] (re-find #"^(\w)(\d*)$" instruction)
-        value (Integer. value-string)]
-    (case action
-      "N" (n status value)
-      "S" (s status value)
-      "E" (e status value)
-      "W" (w status value)
-      "L" (l status value)
-      "R" (r status value)
-      "F" (f status value mov))))
 
 (defn ride-boat
   [status instructions op-set]
@@ -644,5 +644,31 @@
 (defn t12-2
   []
   (let [status (ride-boat {:x 0 :y 0 :dir "E" :wp-x 10 :wp-y 1} (nav-instructions) wp-movements)]
-    (+ (Math/abs (:x status)) (Math/abs (:y status)))
-))
+    (+ (Math/abs (:x status)) (Math/abs (:y status)))))
+
+; task 13
+(defn bus-times
+  []
+  (let [[depart-time bus-times-with-x] (line-split (slurp "inputs/input13"))
+        depart-int (Integer. depart-time)
+        bus-times (map #(Integer. %) (re-seq #"\d+" bus-times-with-x))]
+    (list depart-int bus-times)))
+
+(defn check-divisor
+  [value divisors]
+  (cond 
+    (empty? divisors) nil
+    (= 0 (mod value (first divisors))) (first divisors)
+    :else (recur value (rest divisors))))
+
+(defn search-divisor
+  [start-value divisors]
+  (if-let [div (check-divisor start-value divisors)]
+    [start-value div]
+    (recur (inc start-value) divisors)))
+
+(defn t13-1
+  []
+  (let [[depart times] (bus-times)
+        [found-depart found-bus] (search-divisor depart times)]
+    (* found-bus (- found-depart depart))))
