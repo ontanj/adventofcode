@@ -672,3 +672,36 @@
   (let [[depart times] (bus-times)
         [found-depart found-bus] (search-divisor depart times)]
     (* found-bus (- found-depart depart))))
+
+(defn bus-times-timestamp
+  []
+  (let [str-timestamps (-> "inputs/input13"
+                           slurp
+                           line-split
+                           second
+                           (str/split #",")
+                           (#(map list %1 %2) (range)))]
+    (->> str-timestamps
+         (filter #(not= (first %) "x"))
+         (map #(list (Integer. (first %)) (second %)))
+         (sort #(> (first %1) (first %2))))))
+
+(defn check-bus-times
+  [time [[line diff] & bus-times]]
+  (cond
+    (= 0 (mod (+ time diff) line))
+      (if (empty? bus-times) time (recur time bus-times))
+    :else nil))
+
+(defn search-bus-series
+  [time bus-times]
+  ;(if (> 743 (rem time 1000000000)) (println time))
+  (if-let [time (check-bus-times time bus-times)]
+    time
+    (recur (+ time (first (first bus-times))) bus-times)))
+
+(defn t13-2
+  ([] (t13-2 1))
+  ([start]
+   (let [[[longest diff] :as bus-times] (bus-times-timestamp)]
+     (search-bus-series (+ start (- longest (rem (+ start diff) longest))) bus-times))))
