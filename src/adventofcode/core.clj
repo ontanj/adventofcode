@@ -705,3 +705,40 @@
   ([start]
    (let [[[longest diff] :as bus-times] (bus-times-timestamp)]
      (search-bus-series (+ start (- longest (rem (+ start diff) longest))) bus-times))))
+
+; task 14
+(defn mask-pos
+  [func [pos mask]]
+  (comp (case mask
+          \X identity
+          \0 #(bit-clear % pos)
+          \1 #(bit-set % pos))
+        func))
+
+(defn mask-builder
+  [mask]
+  (->> mask
+       reverse
+       (map list (range))
+       (reduce mask-pos identity)))
+
+(defn mask-input
+  [line]
+  (if-let [mask (re-find #"mask = (.*)" line)]
+    {:type :mask :val (mask-builder (second mask))}
+    (let [[pos val] (map #(Integer/parseInt %) (rest (re-find #"mem\[(\d+)\] = (\d+)" line)))]
+      {:type :inp :pos pos :val val})))
+
+(defn read-mask-data
+  []
+  (map mask-input (line-split (slurp "inputs/input14"))))
+
+(defn run-masks
+  [status line]
+  (if (= :mask (:type line))
+    (assoc status :mask (:val line))
+    (assoc-in status [:vals (:pos line)] ((:mask status) (:val line)))))
+
+(defn t14-1
+  []
+  (reduce #(+ (second %2) %1) 0 (:vals (reduce run-masks {:vals {}} (read-mask-data)))))
