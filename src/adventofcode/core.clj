@@ -773,3 +773,26 @@
 (defn t14-2
   []
   (reduce #(+ (second %2) %1) 0 (:vals (reduce run-decoder {:vals {}} (read-mask-data)))))
+
+; task 15
+(defn memory-numbers
+  []
+  (let [all-numbers (-> "inputs/input15"
+                    slurp
+                    str/trim
+                    (str/split #","))
+        last-num (Integer. (last all-numbers))
+        first-numbers (drop-last 1 all-numbers)]
+    (assoc (into {} (map (fn [n i] [(Integer.  n) i]) first-numbers (range))) :last last-num)))
+
+(defn play-memory
+  [history round]
+  (let [last (:last history)]
+    (if-let [prev (get history last)]
+      (let [new (- round prev)] (-> history (assoc last round) (assoc :last new)))
+      (-> history (assoc last round) (assoc :last 0)))))
+
+(defn t15
+  [last]
+  (let [history (memory-numbers)]
+    (:last (reduce play-memory history (range (dec (count history)) (dec last))))))
