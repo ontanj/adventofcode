@@ -725,7 +725,7 @@
 (defn mask-input
   [line]
   (if-let [mask (re-find #"mask = (.*)" line)]
-    {:type :mask :val (mask-builder (second mask))}
+    {:type :mask :val (second mask)}
     (let [[pos val] (map #(Integer/parseInt %) (rest (re-find #"mem\[(\d+)\] = (\d+)" line)))]
       {:type :inp :pos pos :val val})))
 
@@ -736,9 +736,40 @@
 (defn run-masks
   [status line]
   (if (= :mask (:type line))
-    (assoc status :mask (:val line))
+    (assoc status :mask (mask-builder (:val line)))
     (assoc-in status [:vals (:pos line)] ((:mask status) (:val line)))))
 
 (defn t14-1
   []
   (reduce #(+ (second %2) %1) 0 (:vals (reduce run-masks {:vals {}} (read-mask-data)))))
+
+(defn decode-pos
+  [func [pos mask]]
+  (comp (case mask
+          \0 identity
+          \1 (fn [vals] (map #(bit-set % pos) vals))
+          \X (fn [vals] (reduce #(concat %1
+                                            (list (bit-set %2 pos)
+                                                  (bit-clear %2 pos)))
+                                   (list)
+                                   vals)))
+        func))
+
+(defn decode-builder
+  [mask]
+  (let [positions (->> mask
+                       reverse
+                       (map list (range))
+                       (reduce decode-pos identity))]
+    (fn [status pos val]
+      (reduce #(assoc-in %1 [:vals %2] val) status (positions (list pos))))))
+
+(defn run-decoder
+  [status line]
+  (if (= :mask (:type line))
+    (assoc status :mask (decode-builder (:val line)))
+    ((:mask status) status (:pos line) (:val line))))
+
+(defn t14-2
+  []
+  (reduce #(+ (second %2) %1) 0 (:vals (reduce run-decoder {:vals {}} (read-mask-data)))))
