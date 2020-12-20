@@ -796,3 +796,23 @@
   [last]
   (let [history (memory-numbers)]
     (:last (reduce play-memory history (range (dec (count history)) (dec last))))))
+
+; task 16
+(defn ticket-fields
+  []
+  (d-line-split (slurp "inputs/input16")))
+
+(defn ticket-rules
+  [rules]
+  (map (fn [[_ low high]] #(<= (Integer. low) % (Integer. high))) (re-seq #"(\d*)-(\d*)" rules)))
+
+(defn test-field
+  [rules]
+  (apply some-fn rules))
+
+(defn t16-1
+  []
+  (let [[rules _ tickets] (ticket-fields)
+        check (-> rules ticket-rules test-field)]
+    (reduce + (filter #(not (check %))
+                      (map #(Integer. %) (re-seq #"\d+" tickets))))))
